@@ -8,7 +8,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Property;
 use App\Repository\PropertyRepository;
 
-class PropertyController extends AbstractController{
+class PropertyController extends AbstractController
+{
 
     /**
      *@var PropertyRepository
