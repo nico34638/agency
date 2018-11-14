@@ -30,6 +30,13 @@ class PropertySearchType extends AbstractType
                   'placeholder' => 'Budget max'
                 ]
               ])
+            ->add('options', EntityType::class, [
+                'required' => false,
+                'label' => false,
+                'class' => Option::class,
+                'choice_label' => 'name',
+                'multiple' => true
+            ])
         ;
     }
 
