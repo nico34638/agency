@@ -6,20 +6,25 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Cocur\Slugify\Slugify;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PropertyRepository")
- *@UniqueEntity("title")
+ * @UniqueEntity("title")
+ * @Vich\Uploadable()
  */
 class Property
 {
+
     const HEAT = [
-      0 => 'Electrique',
-      1 => 'Gaz',
-      2 => 'Fioul'
+        0 => 'Electrique',
+        1 => 'Gaz'
     ];
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -28,19 +33,34 @@ class Property
     private $id;
 
     /**
+     * @var string|null
+     * @ORM\Column(type="string", length=255)
+     */
+    private $filename;
+
+    /**
+     * @var File|null
+     * @Assert\Image(
+     *     mimeTypes="image/jpeg"
+     * )
+     * @Vich\UploadableField(mapping="property_image", fileNameProperty="filename")
+     */
+    private $imageFile;
+
+    /**
+     * @Assert\Length(min=5, max=255)
      * @ORM\Column(type="string", length=255)
      */
     private $title;
 
     /**
-     *@Assert\Length(min=5, max=255)
      * @ORM\Column(type="text", nullable=true)
      */
     private $description;
 
     /**
      * @ORM\Column(type="integer")
-     *@Assert\Range(min=10, max=500)
+     * @Assert\Range(min=10, max=400)
      */
     private $surface;
 
@@ -80,8 +100,8 @@ class Property
     private $address;
 
     /**
+     * @Assert\Regex("/^[0-9]{5}$/")
      * @ORM\Column(type="string", length=255)
-     *@Assert\Regex("/^[0-9]{5}$/")
      */
     private $postal_code;
 
@@ -100,10 +120,15 @@ class Property
      */
     private $options;
 
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $updated_at;
+
     public function __construct()
     {
-      $this->created_at = new \DateTime();
-      $this->options = new ArrayCollection();
+        $this->created_at = new \DateTime();
+        $this->options = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -125,7 +150,7 @@ class Property
 
     public function getSlug(): string
     {
-      return (new Slugify())->slugify($this->title);
+        return (new Slugify())->slugify($this->title);
     }
 
     public function getDescription(): ?string
@@ -193,11 +218,6 @@ class Property
         return $this->price;
     }
 
-    public function getFormatedPrice(): string
-    {
-        return number_format($this->price, 0, '', ' ');
-    }
-
     public function setPrice(int $price): self
     {
         $this->price = $price;
@@ -205,14 +225,14 @@ class Property
         return $this;
     }
 
+    public function getFormatedPrice(): string
+    {
+        return number_format($this->price, 0, '', ' ');
+    }
+
     public function getHeat(): ?int
     {
         return $this->heat;
-    }
-
-    public function getHeatType(): string
-    {
-        return self::HEAT[$this->heat];
     }
 
     public function setHeat(int $heat): self
@@ -220,6 +240,11 @@ class Property
         $this->heat = $heat;
 
         return $this;
+    }
+
+    public function getHeatType(): string
+    {
+        return self::HEAT[$this->heat];
     }
 
     public function getCity(): ?string
@@ -309,4 +334,56 @@ class Property
 
         return $this;
     }
+
+    /**
+     * @return null|string
+     */
+    public function getFilename(): ?string
+    {
+        return $this->filename;
+    }
+
+    /**
+     * @param null|string $filename
+     * @return Property
+     */
+    public function setFilename(?string $filename): Property
+    {
+        $this->filename = $filename;
+        return $this;
+    }
+
+    /**
+     * @return null|File
+     */
+    public function getImageFile(): ?File
+    {
+        return $this->imageFile;
+    }
+
+    /**
+     * @param null|File $imageFile
+     * @return Property
+     */
+    public function setImageFile(?File $imageFile): Property
+    {
+        $this->imageFile = $imageFile;
+        if ($this->imageFile instanceof UploadedFile) {
+            $this->updated_at = new \DateTime('now');
+        }
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updated_at): self
+    {
+        $this->updated_at = $updated_at;
+
+        return $this;
+    }
+
 }
